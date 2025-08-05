@@ -120,7 +120,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Bearer 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"
+              "value": "Bearer Your_Groq_ApiKey"
             },
             {
               "name": "Content-Type",
@@ -164,7 +164,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Bearer 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"
+              "value": "Bearer Your_Groq_ApiKeyP"
             },
             {
               "name": "Content-Type",
@@ -261,7 +261,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Bearer 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"
+              "value": "Bearer Your_Groq_ApiKeyP"
             },
             {
               "name": "Content-Type",

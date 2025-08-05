@@ -1,84 +1,147 @@
-🤖 AI Content Automation Workflow
-This is an automated system built with n8n that streamlines the content creation process. The workflow researches trending topics, generates comprehensive blog posts and video scripts, and then submits everything to a Google Sheet for human review.
+# 🤖 AI Content Automation Workflow
 
-✨ Features
-Automated Research: Discovers trending topics in the AI automation niche daily using Google Trends and YouTube.
+This is an automated content creation system built using [n8n](https://n8n.io/). It streamlines the content pipeline by researching trending topics, generating high-quality blog posts and video scripts using LLaMA-3 via Groq API, and submitting everything to Google Sheets for human review.
 
-AI-Powered Content: Utilizes the Groq API with the LLaMA-3 model to generate high-quality blog posts and video scripts.
+---
 
-Human-in-the-Loop: Submits all content to a Google Sheet, allowing for easy review and editing before publication.
+## ✨ Features
 
-Error Handling: Includes mechanisms for fallback topics, API timeouts, and data validation for a reliable workflow.
+- **Automated Research**  
+  Discovers trending topics in the AI automation niche daily using Google Trends and YouTube.
 
-🏗️ Architecture
-This is a 4-Agent system built in n8n using visual workflow nodes.
+- **AI-Powered Content**  
+  Utilizes the Groq API with the LLaMA-3 model to generate high-quality blog posts and video scripts.
 
-1. Content Research Agent
-Purpose: Discover trending topics in the AI Automation niche.
+- **Human-in-the-Loop**  
+  Submits all content to a Google Sheet, allowing for easy review and editing before publication.
 
-Nodes Used:
+- **Error Handling**  
+  Includes mechanisms for fallback topics, API timeouts, and data validation for a reliable workflow.
 
-Schedule Trigger: Daily execution at 9:00 AM.
+---
 
-HTTP Request (Google Trends): SerpAPI integration.
+## 🏗️ Architecture
 
-HTTP Request (YouTube): YouTube Data API v3.
+This is a 4-Agent system built in **n8n** using visual workflow nodes.
 
-Code Node (Process Topics): Merges, deduplicates, and cleans topics to output an array of 5 unique topics.
+### 1. 🕵️‍♂️ Content Research Agent
+**Purpose:** Discover trending topics in the AI Automation niche.
 
-2. Prompt Agent
-Purpose: Generate content creation prompts from trending topics.
+**Nodes Used:**
+- `Schedule Trigger`: Executes daily at 9:00 AM.
+- `HTTP Request (Google Trends)`: Fetches via SerpAPI.
+- `HTTP Request (YouTube Trends)`: Uses YouTube Data API v3.
+- `Code Node (Process Topics)`: Cleans, deduplicates, and outputs 5 unique topics.
 
-Nodes Used:
+---
 
-HTTP Request (Groq API): Uses the LLaMA-3 model for prompt generation.
+### 2. 💡 Prompt Agent
+**Purpose:** Generate content creation prompts based on trending topics.
 
-Code Node (Parse Prompts): Structures the prompts for content creation.
+**Nodes Used:**
+- `HTTP Request (Groq API)`: Uses LLaMA-3 to generate prompts.
+- `Code Node (Parse Prompts)`: Formats the data for content generation.
 
-3. Content Creator Agent
-Purpose: Generate the actual content (blog posts and video scripts).
+---
 
-Nodes Used:
+### 3. ✍️ Content Creator Agent
+**Purpose:** Generate long-form content and scripts.
 
-HTTP Request (Blog Content): Uses Groq API with an expert system prompt and a max token limit of 2000.
+**Nodes Used:**
+- `HTTP Request (Blog Content)`: Blog post generation via Groq API (LLaMA-3, 2000 tokens).
+- `HTTP Request (Video Script)`: Video script generation via Groq API (1500 tokens).
+- `Code Node (Compile Content)`: Merges blog and video content into a structured object.
 
-HTTP Request (Video Script): Uses Groq API with an expert system prompt and a max token limit of 1500.
+---
 
-Code Node (Compile Content): Merges all content into a final package.
+### 4. 📤 Content Submission & Review Agent
+**Purpose:** Submits content to a Google Sheet for human QA.
 
-4. Content Submission & Review Agent
-Purpose: Submit generated content to a Google Sheet for human review.
+**Nodes Used:**
+- `HTTP Request (Google Sheets)`: Sends data to a Google Apps Script web endpoint.
+- `Google Apps Script`: Handles backend write to Google Sheet.
 
-Nodes Used:
+---
 
-HTTP Request (Google Sheets): Submits data to a Google Apps Script web app.
+## 🛠️ Technical Implementation
 
-Google Apps Script: Handles server-side processing and writing to the sheet.
+### API Integrations
+- **SerpAPI**: Fetches Google Trends data.
+- **YouTube Data API v3**: Gathers trending video topics.
+- **Groq API**: Content generation via LLaMA-3.
+- **Google Apps Script**: Submits data to a spreadsheet.
 
-🛠️ Technical Implementation
-API Integrations
-SerpAPI: For Google Trends data.
+### Configuration Requirements
 
-YouTube Data API v3: For video trend analysis.
+You will need the following:
+- ✅ SerpAPI key  
+- ✅ YouTube Data API v3 key  
+- ✅ Groq API key  
+- ✅ Google Apps Script Web App URL  
 
-Groq API: For AI content generation using LLaMA-3.
+---
+[Schedule Trigger]
+↓
+[Google Trends + YouTube Trends APIs]
+↓
+[Process Topics]
+↓
+[Groq LLaMA-3: Prompt Generation]
+↓
+[Groq LLaMA-3: Blog + Video Generation]
+↓
+[Compile Content]
+↓
+[Submit to Google Sheets]
 
-Google Apps Script: For submitting data to Google Sheets.
+yaml
+Copy
+Edit
 
-Configuration Requirements
-You will need the following API keys and URLs:
+---
 
-- SerpAPI key
-- YouTube Data API v3 key
-- Groq API key
-- Google Apps Script web app URL
-Data Flow
-Schedule → Research APIs → Topic Processing → AI Prompts → Content Creation → Sheet Submission
-📊 Performance & Metrics
-Execution Time: Approximately 45 seconds end-to-end.
+## 📊 Performance & Metrics
 
-Success Rate: 98% (with error handling).
+| Metric              | Value               |
+|---------------------|---------------------|
+| ⏱️ Execution Time   | ~45 seconds         |
+| ✅ Success Rate      | ~98% (with retries) |
+| 🧠 Content Quality   | SEO-optimized, high-quality |
+| 💵 Estimated Cost    | ~$0.05 per full run |
 
-Content Quality: High-quality, SEO-optimized content.
+---
 
-Cost: ~$0.05 per complete workflow run.
+## 📂 Folder Structure (Optional)
+/n8n-workflows/
+
+content_research.json
+
+prompt_agent.json
+
+content_creator.json
+
+submission_agent.json
+
+/scripts/
+
+google_apps_script.gs
+
+/docs/
+
+sample_output.md
+
+api_config_guide.md
+
+yaml
+Copy
+Edit
+
+---
+
+## 📜 License
+
+This project is open-sourced under the [MIT License](LICENSE).
+
+---
+## 🔄 Data Flow
+

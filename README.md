@@ -1,114 +1,84 @@
-AI Content Automation Workflow Documentation
-Overview
-Automated system that researches trending AI automation topics, generates content prompts, creates blog posts and video scripts, then submits everything to Google Sheets for review.
-Architecture
-4-Agent system built entirely in n8n using visual workflow nodes.
-Agent Breakdown
-1. ContentResearch Agent
-Purpose: Discover trending topics in AI Automation niche
+🤖 AI Content Automation Workflow
+This is an automated system built with n8n that streamlines the content creation process. The workflow researches trending topics, generates comprehensive blog posts and video scripts, and then submits everything to a Google Sheet for human review.
+
+✨ Features
+Automated Research: Discovers trending topics in the AI automation niche daily using Google Trends and YouTube.
+
+AI-Powered Content: Utilizes the Groq API with the LLaMA-3 model to generate high-quality blog posts and video scripts.
+
+Human-in-the-Loop: Submits all content to a Google Sheet, allowing for easy review and editing before publication.
+
+Error Handling: Includes mechanisms for fallback topics, API timeouts, and data validation for a reliable workflow.
+
+🏗️ Architecture
+This is a 4-Agent system built in n8n using visual workflow nodes.
+
+1. Content Research Agent
+Purpose: Discover trending topics in the AI Automation niche.
+
 Nodes Used:
 
-Schedule Trigger: Daily execution at 9:00 AM
-HTTP Request (Google Trends): SerpAPI integration
+Schedule Trigger: Daily execution at 9:00 AM.
 
-URL: https://serpapi.com/search
-Parameters: engine=google_trends, q=AI automation, geo=US
+HTTP Request (Google Trends): SerpAPI integration.
 
+HTTP Request (YouTube): YouTube Data API v3.
 
-HTTP Request (YouTube): YouTube Data API v3
+Code Node (Process Topics): Merges, deduplicates, and cleans topics to output an array of 5 unique topics.
 
-URL: https://www.googleapis.com/youtube/v3/search
-Parameters: part=snippet, q=AI automation 2025, type=video
-
-
-Code Node (Process Topics): Merge, deduplicate, and clean topics
-
-Output: Array of 5 unique trending topics with metadata
 2. Prompt Agent
-Purpose: Generate content creation prompts from trending topics
+Purpose: Generate content creation prompts from trending topics.
+
 Nodes Used:
 
-HTTP Request (Groq API): LLaMA-3 model for prompt generation
+HTTP Request (Groq API): Uses the LLaMA-3 model for prompt generation.
 
-URL: https://api.groq.com/openai/v1/chat/completions
-Model: llama3-8b-8192
-Temperature: 0.7
+Code Node (Parse Prompts): Structures the prompts for content creation.
 
-
-Code Node (Parse Prompts): Structure prompts for content creation
-
-Output: Structured prompts for blog and video content
 3. Content Creator Agent
-Purpose: Generate actual content (blog posts and video scripts)
+Purpose: Generate the actual content (blog posts and video scripts).
+
 Nodes Used:
 
-HTTP Request (Blog Content): Groq API for comprehensive blog posts
+HTTP Request (Blog Content): Uses Groq API with an expert system prompt and a max token limit of 2000.
 
-System prompt: Expert AI content writer
-Max tokens: 2000
+HTTP Request (Video Script): Uses Groq API with an expert system prompt and a max token limit of 1500.
 
+Code Node (Compile Content): Merges all content into a final package.
 
-HTTP Request (Video Script): Groq API for engaging video scripts
-
-System prompt: Expert video script writer
-Max tokens: 1500
-
-
-Code Node (Compile Content): Merge all content into final format
-
-Output: Complete content package with blog and video script
 4. Content Submission & Review Agent
-Purpose: Submit generated content to Google Sheets for human review
+Purpose: Submit generated content to a Google Sheet for human review.
+
 Nodes Used:
 
-HTTP Request (Google Sheets): Form-data submission to Google Apps Script
-Google Apps Script: Server-side processing and sheet writing
+HTTP Request (Google Sheets): Submits data to a Google Apps Script web app.
 
-Google Sheets Columns:
+Google Apps Script: Handles server-side processing and writing to the sheet.
 
-Topic ID, Topic, Date Created, Time Created, Blog Content, Video Script, Status, Generated At
+🛠️ Technical Implementation
+API Integrations
+SerpAPI: For Google Trends data.
 
-Technical Implementation
-API Integrations:
+YouTube Data API v3: For video trend analysis.
 
-SerpAPI: Google Trends data extraction
-YouTube Data API v3: Video trend analysis
-Groq API: AI content generation (LLaMA-3)
-Google Apps Script: Sheet data submission
+Groq API: For AI content generation using LLaMA-3.
 
-Error Handling:
+Google Apps Script: For submitting data to Google Sheets.
 
-Fallback topics if no trending data found
-API timeout handling in all HTTP requests
-Data validation in processing nodes
-Success/failure logging in Google Apps Script
-
-Data Flow:
-Schedule → Research APIs → Topic Processing → AI Prompts → Content Creation → Sheet Submission
 Configuration Requirements
-API Keys Needed:
+You will need the following API keys and URLs:
 
-SerpAPI key for Google Trends
-YouTube Data API v3 key
-Groq API key
-Google Apps Script web app URL
+- SerpAPI key
+- YouTube Data API v3 key
+- Groq API key
+- Google Apps Script web app URL
+Data Flow
+Schedule → Research APIs → Topic Processing → AI Prompts → Content Creation → Sheet Submission
+📊 Performance & Metrics
+Execution Time: Approximately 45 seconds end-to-end.
 
-Authentication:
+Success Rate: 98% (with error handling).
 
-All APIs use Bearer token or API key authentication
-Google Sheets uses public web app (no OAuth required)
+Content Quality: High-quality, SEO-optimized content.
 
-Testing Results
-
-✅ Daily schedule triggers successfully
-✅ Topics extracted from Google Trends and YouTube
-✅ AI content generation working (blog posts ~1500 words, video scripts ~800 words)
-✅ Data successfully submitted to Google Sheets
-✅ Error handling prevents workflow failures
-
-Performance Metrics
-
-Execution Time: ~45 seconds end-to-end
-Success Rate: 98% (with error handling)
-Content Quality: High-quality, SEO-optimized content
-Cost: ~$0.05 per complete workflow run
+Cost: ~$0.05 per complete workflow run.

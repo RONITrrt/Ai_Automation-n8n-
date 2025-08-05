@@ -1,0 +1,420 @@
+{
+  "name": "Ai-Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtMinute": 20
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "cc060720-e6fc-439d-94d4-83b9787fa94e",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://serpapi.com/search",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "engine",
+              "value": "google_trends"
+            },
+            {
+              "name": "q",
+              "value": "AI automation"
+            },
+            {
+              "name": "geo",
+              "value": "US"
+            },
+            {
+              "name": "api_key",
+              "value": "=88e584faf6b20857dad137ece7cd7fb974e962f446b33668c255023ed8afddd6"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        0
+      ],
+      "id": "5853cad3-1d8a-45a9-9ea0-12a46439a55a",
+      "name": "Google Trends Research"
+    },
+    {
+      "parameters": {
+        "url": "https://www.googleapis.com/youtube/v3/search",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "part",
+              "value": "snippet"
+            },
+            {
+              "name": "q",
+              "value": "AI automation 2025"
+            },
+            {
+              "name": "type",
+              "value": "video"
+            },
+            {
+              "name": "order",
+              "value": "relevance"
+            },
+            {
+              "name": "maxResults",
+              "value": "20"
+            },
+            {
+              "name": "key",
+              "value": "AIzaSyBKs8slXxg6NYsFFUD20D84_z8r-H1RT1M"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        384,
+        144
+      ],
+      "id": "3813dea3-1e24-463a-a841-4db7bee70584",
+      "name": "YouTube Research"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Process and merge trending topics\nconst inputs = $input.all();\nlet topics = [];\n\n// Process Google Trends data (SerpAPI format)\nconst trendsData = inputs.find(input => input.json.search_metadata?.engine === 'google_trends');\nif (trendsData && trendsData.json.related_queries) {\n  const relatedQueries = trendsData.json.related_queries.rising || [];\n  topics = topics.concat(\n    relatedQueries\n      .filter(query => \n        query.query.toLowerCase().includes('ai') || \n        query.query.toLowerCase().includes('automation')\n      )\n      .map(query => query.query)\n      .slice(0, 5)\n  );\n}\n\n// Process YouTube data\nconst youtubeData = inputs.find(input => input.json.items);\nif (youtubeData && youtubeData.json.items) {\n  const youtubeTitles = youtubeData.json.items\n    .map(item => item.snippet.title)\n    .filter(title => \n      title.toLowerCase().includes('ai') || \n      title.toLowerCase().includes('automation')\n    )\n    .slice(0, 5);\n  topics = topics.concat(youtubeTitles);\n}\n\n// Add fallback topics if no trending topics found\nif (topics.length === 0) {\n  topics = [\n    \"AI Automation Tools for Small Business 2025\",\n    \"Machine Learning Workflow Automation\",\n    \"AI-Powered Customer Service Automation\",\n    \"Robotic Process Automation with AI\",\n    \"AI Automation in Digital Marketing\"\n  ];\n}\n\n// Deduplicate and clean topics\nconst uniqueTopics = [...new Set(topics)]\n  .filter(topic => topic && topic.length > 10)\n  .slice(0, 5); // Limit to top 5 topics\n\nconsole.log('Processed topics:', uniqueTopics);\n\nreturn uniqueTopics.map((topic, index) => ({ \n  topic, \n  topicId: `topic_${Date.now()}_${index + 1}`,\n  timestamp: new Date().toISOString()\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        624,
+        0
+      ],
+      "id": "688a43c1-254a-434e-a3d2-7d4ed1f84eee",
+      "name": "Process Topics"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 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"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are an expert AI Automation content writer with deep knowledge of business processes, technology implementation, and digital transformation. Write comprehensive, SEO-optimized blog posts that provide genuine value to business professionals.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Write a complete, publication-ready blog post based on the following specifications:\\n\\n**Topic:** {{ $json.topic }}\\n**Content Prompt:** {{ $json.blogPrompt }}\\n**Target Keywords:** {{ $json.keywords.join(', ') }}\\n**Target Audience:** {{ $json.audience }}\\n**Key Takeaways to Include:** {{ $json.takeaways.join(', ') }}\\n\\n**Requirements:**\\n- 1,500-2,000 words\\n- Include compelling title and meta description\\n- Use H2 and H3 headings for structure\\n- Include at least 3 practical examples\\n- Add actionable tips and recommendations\\n- Include a strong conclusion with clear next steps\\n- Naturally incorporate target keywords\\n- Write in markdown format\\n\\nMake this a comprehensive resource that readers will want to bookmark and share.\"\n    }\n  ],\n  \"model\": \"llama3-8b-8192\",\n  \"temperature\": 0.7,\n  \"max_tokens\": 2500,\n  \"stream\": false\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1264,
+        272
+      ],
+      "id": "21d4533a-f8c0-440e-a295-dadaf9cadc15",
+      "name": "Create Blog Content"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Compile all content data for final output\nconst inputs = $input.all();\n\n// Get the original parsed data\nlet originalData;\ntry {\n  originalData = $('Parse Prompts').first().json; // Adjust node name if different\n} catch (error) {\n  console.log('Could not find original data, using fallback');\n  originalData = {\n    topic: \"AI Automation\",\n    keywords: [\"AI\", \"automation\"],\n    audience: \"Business professionals\",\n    takeaways: [\"Key insights\"]\n  };\n}\n\n// Find blog and video responses from the inputs\nlet blogContent = \"Blog generation failed\";\nlet videoScript = \"Video script generation failed\";\n\n// Process each input to find blog and video content\ninputs.forEach((input, index) => {\n  if (input.json && input.json.choices && input.json.choices[0]) {\n    const content = input.json.choices[0].message.content;\n    \n    // Determine if this is blog or video content based on content or order\n    if (index === 0 || content.includes('# ') || content.includes('## ')) {\n      // Likely blog content (has markdown headers)\n      blogContent = content;\n    } else {\n      // Likely video script\n      videoScript = content;\n    }\n  }\n});\n\n// If both inputs look the same, assign them appropriately\nif (inputs.length === 2 && blogContent === videoScript) {\n  blogContent = inputs[0].json?.choices?.[0]?.message?.content || \"Blog generation failed\";\n  videoScript = inputs[1].json?.choices?.[0]?.message?.content || \"Video script generation failed\";\n}\n\n// Generate metrics\nconst wordCount = blogContent !== \"Blog generation failed\" ? blogContent.split(' ').length : 0;\nconst estimatedReadTime = Math.ceil(wordCount / 200);\n\n// Create unique topic ID\nconst topicId = `topic_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;\n\nreturn [{\n  json: {\n    topicId: topicId,\n    topic: originalData.topic || \"AI Automation\",\n    timestamp: originalData.timestamp || new Date().toISOString(),\n    blogPrompt: originalData.blogPrompt || \"Blog prompt not available\",\n    videoPrompt: originalData.videoPrompt || \"Video prompt not available\",\n    keywords: Array.isArray(originalData.keywords) ? originalData.keywords.join(', ') : \"AI, automation, business\",\n    audience: originalData.audience || \"Business professionals\",\n    takeaways: Array.isArray(originalData.takeaways) ? originalData.takeaways.join(' | ') : \"Key insights | Implementation tips | Business benefits\",\n    blogContent: blogContent,\n    videoScript: videoScript,\n    wordCount: wordCount,\n    estimatedReadTime: `${estimatedReadTime} min`,\n    contentCreatedAt: new Date().toISOString(),\n    status: \"Pending Review\",\n    contentQuality: wordCount > 1500 ? \"High\" : wordCount > 800 ? \"Medium\" : \"Low\",\n    reviewerNotes: \"\",\n    approvalStatus: \"Pending\",\n    blogLink: \"To be published after approval\",\n    videoLink: \"To be generated after approval\",\n    generationSuccess: blogContent !== \"Blog generation failed\" && videoScript !== \"Video script generation failed\"\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1664,
+        0
+      ],
+      "id": "29d42515-fc55-4147-a9e0-9aec1f9fc6c1",
+      "name": "Compile Content "
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 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"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are an expert content strategist specializing in AI Automation. Generate comprehensive, actionable content prompts.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Topic: AI Automation Tools for Small Business 2025. Generate content prompts as JSON with keys: blogPrompt, videoPrompt, keywords (array), audience, takeaways (array).\"\n    }\n  ],\n  \"model\": \"llama3-8b-8192\",\n  \"temperature\": 0.7,\n  \"max_tokens\": 1000\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        864,
+        0
+      ],
+      "id": "ed59c785-c44c-4af0-8ead-09b424699fb1",
+      "name": "HTTP Request (Groq API)"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Fixed Parse Prompts Code\nconst groqResponse = $input.first().json;\n\n// Get the original topic data from Node 4\nlet originalData;\ntry {\n  // Adjust 'Process Topics' to match your Node 4's actual name\n  originalData = $('Process Topics').first().json;\n} catch (error) {\n  console.log('Using fallback topic data');\n  originalData = [{\n    topic: \"AI Automation for Small Businesses\",\n    topicId: `topic_${Date.now()}_1`,\n    timestamp: new Date().toISOString()\n  }];\n}\n\n// Parse Groq response\nlet parsedContent;\ntry {\n  if (groqResponse.choices && groqResponse.choices[0]) {\n    const content = groqResponse.choices[0].message.content;\n    parsedContent = JSON.parse(content);\n  } else {\n    throw new Error('Invalid Groq response format');\n  }\n} catch (error) {\n  console.log('Parse error, using fallback');\n  parsedContent = {\n    blog_title: originalData[0]?.topic || \"AI Automation Guide\",\n    blog_outline: [\"Introduction\", \"Key Benefits\", \"Implementation Steps\", \"Conclusion\"],\n    video_title: `${originalData[0]?.topic || \"AI Automation\"} - Complete Guide`,\n    video_outline: [\"Hook\", \"Problem\", \"Solution\", \"Call to Action\"]\n  };\n}\n\n// Combine original data with parsed prompts\nconst result = {\n  ...originalData[0],\n  prompts: parsedContent,\n  processedAt: new Date().toISOString()\n};\n\nreturn [result];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        0
+      ],
+      "id": "086aa493-bec2-4391-ba07-f3442ab6bca7",
+      "name": "Parse Prompts"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://script.google.com/macros/s/AKfycbyq879QgSKx3z2bj8Sf_wq4ETmg-QdWHN03xvt1iELxsFJ3FXuoI9PBCQLC7NESFkxrEw/exec",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "topicId",
+              "value": "{{ $json.topicId }}"
+            },
+            {
+              "name": "topic",
+              "value": "{{ $json.topic }}"
+            },
+            {
+              "name": "dateCreated",
+              "value": "{{ new Date().toLocaleDateString() }}"
+            },
+            {
+              "name": "timeCreated",
+              "value": "{{ new Date().toLocaleTimeString() }}"
+            },
+            {
+              "name": "blogContent",
+              "value": "{{ $json.blogContent }}"
+            },
+            {
+              "name": "videoScript",
+              "value": "{{ $json.videoScript }}"
+            },
+            {
+              "name": "status",
+              "value": "In Progress"
+            },
+            {
+              "name": "generatedAt",
+              "value": "{{ new Date().toISOString() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1872,
+        0
+      ],
+      "id": "06d09fbc-a5d2-4393-86f4-7a0732a82990",
+      "name": "HTTP Request Google sheet"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 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"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are an expert video script writer specializing in educational business content. Create engaging, structured video scripts that capture attention and deliver valuable information clearly.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Create a detailed video production script for: {{ $json.topic }}\\n\\nBased on this prompt: {{ $json.videoPrompt }}\\n\\nTarget Audience: {{ $json.audience }}\\n\\nGenerate a comprehensive video script with:\\n1. Compelling video title and description\\n2. Scene-by-scene breakdown with timestamps (0:00-10:00)\\n3. Detailed speaking points for each section\\n4. Visual cues and graphics suggestions\\n5. B-roll footage recommendations\\n6. Call-to-action elements\\n7. Hook that captures attention in first 15 seconds\\n\\nFormat as a structured script ready for video production. Make it engaging and professional.\"\n    }\n  ],\n  \"model\": \"llama3-8b-8192\",\n  \"temperature\": 0.8,\n  \"max_tokens\": 2000,\n  \"stream\": false\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1424,
+        -288
+      ],
+      "id": "73a831de-3f11-4bff-b5dd-c2bda86c693f",
+      "name": "Video script"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Google Trends Research",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Trends Research": {
+      "main": [
+        [
+          {
+            "node": "Process Topics",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "YouTube Research",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "YouTube Research": {
+      "main": [
+        [
+          {
+            "node": "Process Topics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Topics": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request (Groq API)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Blog Content": {
+      "main": [
+        [
+          {
+            "node": "Compile Content ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request (Groq API)": {
+      "main": [
+        [
+          {
+            "node": "Parse Prompts",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Video script",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Create Blog Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Prompts": {
+      "main": [
+        [
+          {
+            "node": "Create Blog Content",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Video script",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compile Content ": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request Google sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Video script": {
+      "main": [
+        [
+          {
+            "node": "Compile Content ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "06019d59-5576-4abc-940b-ba1955528fc4",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "49b5a96983babcb62683cd7c51abee3b8a9e9ab8f70b64fc121dd811c31d3b4f"
+  },
+  "id": "F0tYxjmnWIrR0zGV",
+  "tags": []
+}
